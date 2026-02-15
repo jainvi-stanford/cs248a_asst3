@@ -10,5 +10,5 @@ This repository comes with a interactive renderer, please follow the [interactiv
 
 ## Assignment Handouts
 
-- [Assignment 1 Handout](docs/assignment1.md)
+- [Assignment 3 Handout](docs/assignment3.md)
 
