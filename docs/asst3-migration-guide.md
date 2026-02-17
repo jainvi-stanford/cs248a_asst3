@@ -1,5 +1,5 @@
 # Migration From Assignment 2 to Assignment 3
-We are going to reuse all the functionality that you've built so far straight up for this assignment. You simply need to run `./copy_files.sh` to copy all the functionality, except for 3 functions which are affected in the code refactoring for assignment 3.
+We are going to reuse all the functionality that you've built so far straight up for this assignment. You simply need to run `./migrate-asst2-to-asst3.sh <PATH_TO_ASST2>` to copy all the functionality, except for 3 functions which are affected in the code refactoring for assignment 3.
 
 First, check the mesh renderer in `asst3/src/cs248a_renderer/slang_shaders/renderer/mesh_renderer` directory. It contains 2/3 files that are to modified next. The last file is `asst3/src/cs248a_renderer/model/material.py`
 
