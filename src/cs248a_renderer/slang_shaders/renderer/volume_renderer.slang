@@ -4,7 +4,7 @@ import math;
 import texture;
 
 public static uint MAX_STEPS = 1024;
-public static float EPSILON = 1e-2;
+public static float EPSILON = 1e-6;
 
 public static float STEP_SIZE = 0.01;
 public static float DENSITY_SCALE = 5.0;
@@ -20,9 +20,14 @@ public static float DENSITY_SCALE = 5.0;
 public float4 volumeSample(float2 uv, RendererUniform uniforms, float tMax, float4 primColor)
 {
     // TODO: Student implementation starts here.
-
-    return float4(1.0, 0.0, 1.0, 1.0);
-
+    Ray ray = uniforms.camera.generateRay(uv);
+    Ray localRay = ray.transform(uniforms.volume.invModelMatrix);
+    BoundingBox volumeBound = uniforms.volume.bound;
+    DiffTexture3D<float, 4> data = uniforms.volume.tex;
+    float4 backgroundColor = primColor;
+    float4 volumeColor = accumulateColor(localRay, volumeBound, MAX_STEPS, STEP_SIZE, DENSITY_SCALE, tMax, backgroundColor, data);
+    return volumeColor;
+    
     // TODO: Student implementation ends here.
 }
 
@@ -35,7 +40,28 @@ public float4 volumeSample(float2 uv, RendererUniform uniforms, float tMax, floa
 public void volumeSampleBwd(float2 uv, RendererUniform uniforms, float4 outGrad)
 {
     // TODO: Student implementation starts here.
-
+    
+    // Must use the same tMax and backgroundColor as the forward pass
+    float tMax = float.maxValue;  // No mesh intersection in volume recovery
+    float4 backgroundColor = uniforms.ambientColor;
+    
+    Ray ray = uniforms.camera.generateRay(uv);
+    Ray localRay = ray.transform(uniforms.volume.invModelMatrix);
+    BoundingBox volumeBound = uniforms.volume.bound;
+    
+    DifferentialPtrPair<DiffTexture3D<float, 4>> diffTexPair = 
+        DifferentialPtrPair<DiffTexture3D<float, 4>>(uniforms.volume.tex, uniforms.volume.dTex);
+    bwd_diff(accumulateColor)(
+        localRay,           // no_diff Ray
+        volumeBound,        // no_diff BoundingBox
+        MAX_STEPS,          // no_diff uint maxSteps
+        STEP_SIZE,          // no_diff float stepSize
+        DENSITY_SCALE,      // no_diff float densityScale
+        tMax,               // no_diff float tMax
+        backgroundColor,    // no_diff float4 backgroundColor
+        diffTexPair,        // DifferentialPtrPair<DiffTexture3D>
+        outGrad             // output gradient
+    );
     // TODO: Student implementation ends here.
 }
 
@@ -52,18 +78,48 @@ public void volumeSampleBwd(float2 uv, RendererUniform uniforms, float4 outGrad)
  * @return The accumulated color after ray marching through the volume.
  */
 [Differentiable]
-public float4 accumulateColor<let N : uint>(
+public float4 accumulateColor(
     no_diff Ray ray,
     no_diff BoundingBox volumeBound,
     no_diff uint maxSteps,
     no_diff float stepSize,
     no_diff float densityScale,
+    no_diff float tMax,
     no_diff float4 backgroundColor,
     DiffTexture3D<float, 4> data)
 {
     // TODO: Student implementation starts here.
+    float3 accumColor = float3(0.0);
+    float transmittance = 1.0;
+    float2 hitRange = volumeBound.hit(ray);
+    if (hitRange.y < hitRange.x)
+    {
+        return backgroundColor;
+    }
 
-    return float4(1.0, 0.0, 1.0, 1.0);
+    float t = max(hitRange.x, ray.tRange.x);
+    float tEnd = min(hitRange.y, min(ray.tRange.y, tMax));
+
+    [MaxIters(1024)]
+    for (uint i = 0; i < maxSteps && t <= tEnd; i++) {
+        float3 samplePoint = ray.origin + t * ray.direction;
+        float3 uvw = (samplePoint - volumeBound.pMin) / (volumeBound.pMax - volumeBound.pMin);
+        uvw = clamp(uvw, float3(0.0), float3(1.0));
+        float4 sampleColor = sampleTrilinear(data, uvw);
+        float alpha = 1.0 - exp(-sampleColor.a * densityScale * stepSize);
+        float3 emission = sampleColor.rgb;
+        accumColor += transmittance * emission * alpha;
+        transmittance *= (1.0 - alpha);
+        
+        // Early termination when transmittance is negligible
+        // if (transmittance < 0.001)
+        //     break;
+            
+        t += stepSize;
+    }
+
+    float3 finalColor = accumColor + transmittance * backgroundColor.rgb;
+    return float4(finalColor, 1.0);
 
     // TODO: Student implementation ends here.
 }

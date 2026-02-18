@@ -35,7 +35,24 @@ public Optional<RayMeshIntersectionResult> rayMeshIntersection(Ray ray, Renderer
     // Can you modify your existing code to make use of this flag? This is helpful in `isLightOccluded` function.
 
     // TODO: Student implementation starts here.
+    // Use BVH if available, otherwise fall back to naive loop
+    if(uniforms.useBVH) {
+        Optional<BVH<Triangle>.HitResult> bvhResult = uniforms.bvh.hit(ray);
+        if (bvhResult.hasValue) {
+            result = bvhResult.value.rayHitResult;
+            hitTriangle = Optional<Triangle>(bvhResult.value.primitive);
+        }
+    } else {
+        for (int i = 0; i < uniforms.triangleCount; i++) {
+            Triangle tri = uniforms.triangleBuf[i];
 
+            Optional<RayHitResult> hitResult = tri.hit(ray);
+            if (hitResult.hasValue && (!result.hasValue || hitResult.value.t < result.value.t)) {
+                result = hitResult.value;
+                hitTriangle = Optional<Triangle>(tri);
+            }
+        }
+    }
     // TODO: Student implementation ends here.
 
     if (result.hasValue && hitTriangle.hasValue)

@@ -32,7 +32,17 @@ class SceneObject:
         """
         # TODO: Student implementation starts here.
 
-        return self.transform.get_matrix()
+        transforms = []
+        curr = self
+        while curr is not None:
+            transforms.append(curr.transform.get_matrix())
+            curr = curr.parent
+
+        result = glm.mat4(1.0)
+        for i in range(len(transforms)):
+            result *= transforms[-i-1]
+
+        return result
 
         # TODO: Student implementation ends here.
 

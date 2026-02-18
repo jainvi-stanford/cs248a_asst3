@@ -20,7 +20,14 @@ public struct Camera
     {
         // TODO: Student implementation starts here.
 
-        return Ray(float3(0.0), float3(0.0));  // Placeholder
+        float2 pixel = uv * (canvasSize); // (0,0) and (1,1) to canvas dimensions
+        float2 xy = pixel - canvasSize / 2.0;
+        float3 direction = normalize(float3(xy, -focalLength));
+
+        Ray ray = Ray(float3(0.0, 0.0, 0.0), direction, float2(0.0, float.maxValue));
+
+        // return ray;
+        return ray.transform(invViewMatrix);
 
         // TODO: Student implementation ends here.
     }

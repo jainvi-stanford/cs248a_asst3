@@ -96,19 +96,18 @@ public struct SphereSDF : ISDF
     public float sdf(float3 point)
     {
         // TODO: Student implementation starts here.
-
-        return 0.0;
+        float4 pointLocalH = mul(this.invModelMatrix, float4(point, 1.0));
+        float3 pointLocal = pointLocalH.xyz / pointLocalH.w;
+        float dist = length(pointLocal - this.center) - this.radius;
+        return dist;
 
         // TODO: Student implementation ends here.
     }
 
     public float3 normal(float3 point)
     {
-        // TODO: Student implementation starts here.
-
-        return float3(0.0);
-
-        // TODO: Student implementation ends here.
+        float3 normal = normalize(point - this.center);
+        return normal;
     }
 }
 
@@ -121,8 +120,11 @@ public struct CubeSDF : ISDF
     public float sdf(float3 point)
     {
         // TODO: Student implementation starts here.
-
-        return 0.0;
+        float3 localPoint = mul(this.invModelMatrix, float4(point, 1.0)).xyz;
+        float3 d = abs(localPoint) - this.size;
+        float outsideDist = length(max(d, 0.0));
+        float insideDist = min(max(d.x, max(d.y, d.z)), 0.0);
+        return outsideDist + insideDist;
 
         // TODO: Student implementation ends here.
     }
@@ -130,8 +132,14 @@ public struct CubeSDF : ISDF
     public float3 normal(float3 point)
     {
         // TODO: Student implementation starts here.
-
-        return float3(0.0);
+        // Compute the normal using the gradient of the SDF (finite differences)
+        const float h = 0.0001; // Small epsilon for numerical gradient
+        float3 n = float3(
+            this.sdf(point + float3(h, 0.0, 0.0)) - this.sdf(point - float3(h, 0.0, 0.0)),
+            this.sdf(point + float3(0.0, h, 0.0)) - this.sdf(point - float3(0.0, h, 0.0)),
+            this.sdf(point + float3(0.0, 0.0, h)) - this.sdf(point - float3(0.0, 0.0, h))
+        );
+        return normalize(n);
 
         // TODO: Student implementation ends here.
     }
