@@ -101,6 +101,7 @@ public Optional<RayMeshSampleResult> meshSample(float2 uv, RendererUniform unifo
                 // the ray direction of the next bounce.
 
                 // TODO Step 4a: Student implementation starts here.
+                SampleBRDFResult sample_brdf_result = sampleBRDF(parameters, rayOut, normal, uniforms, rng);
 
                 // TODO Step 4a: Student implementation ends here.
 
@@ -119,9 +120,12 @@ public Optional<RayMeshSampleResult> meshSample(float2 uv, RendererUniform unifo
                 if (parameters.brdfType != 2)
                 {
                     // TODO Step 4b: Student implementation starts here.
-                    
-                    throughput *= 0.0;
-                    
+                    // Update throughput: throughput *= (fr * cosTheta) / pdf
+                    float cosTheta = max(dot(normalize(sample_brdf_result.sampledDirection), normalize(normal)), 0.0);
+                    float pdf = sample_brdf_result.sampledPdf;
+                    if (pdf > 1e-6) {
+                        throughput *= (sample_brdf_result.fr * cosTheta) / pdf;
+                    }
                     // TODO Step 4b: Student implementation ends here.
 
                     if (max(throughput.x, max(throughput.y, throughput.z)) < 1e-2)
@@ -142,7 +146,9 @@ public Optional<RayMeshSampleResult> meshSample(float2 uv, RendererUniform unifo
 
                 // Step 4c: Update the ray for the next bounce.
                 // TODO Step 4c: Student implementation starts here.
-
+                float3 sample_direction = normalize(sample_brdf_result.sampledDirection);
+                ray.origin = hitPoint + EPSILON * sample_direction; // Offset the ray origin to avoid self-intersection issues
+                ray.direction = sample_direction;
                 // TODO Step 4c: Student implementation ends here.
 
                 // TODO: Student implementation ends here.

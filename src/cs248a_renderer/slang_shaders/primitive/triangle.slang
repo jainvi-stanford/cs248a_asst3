@@ -131,7 +131,10 @@ public struct Triangle : IBoundingBox, IRayCastable
         float u = 1.0 - v - w;
 
         if ((u >= -EPSILON && v >= -EPSILON) && (w >= -EPSILON)) {
-            return Optional<RayHitResult>(RayHitResult(t, normal));
+            // Check if t is within the valid ray range [tMin, tMax]
+            if (t >= ray.tRange.x && t <= ray.tRange.y) {
+                return Optional<RayHitResult>(RayHitResult(t, normal));
+            }
         }
 
         return Optional<RayHitResult>();

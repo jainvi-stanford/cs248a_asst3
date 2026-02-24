@@ -50,6 +50,10 @@ public Optional<RayMeshIntersectionResult> rayMeshIntersection(Ray ray, Renderer
             if (hitResult.hasValue && (!result.hasValue || hitResult.value.t < result.value.t)) {
                 result = hitResult.value;
                 hitTriangle = Optional<Triangle>(tri);
+                // Early exit for occlusion test - we only need to know if ANY hit exists
+                if (occlusionTest) {
+                    break;
+                }
             }
         }
     }

@@ -39,7 +39,13 @@ public struct RectangularLight
         float pdf = 1.0;
 
         // TODO: Student implementation starts here.
-
+        float3 toLight = pointOnLight - hitPoint;
+        float distanceSquared = dot(toLight, toLight);
+        float cosTheta = abs(dot(normalize(toLight), this.normal));
+        if (cosTheta <= EPSILON) {
+            return 0.0; // Light is facing away from the point, so PDF is zero
+        }
+        pdf = distanceSquared / (cosTheta * this.area);
         // TODO: Student implementation ends here.
 
         return pdf;
