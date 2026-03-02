@@ -68,13 +68,13 @@ public struct LambertianBRDF
     public float pdf(float3 rayIn, float3 rayOut, float3 normal)
     {
         float EPSILON = 1e-6;
-        float pdf = all(abs(rayIn - rayOut) < EPSILON) ? 1.0 : 0.0;
+        float pdf = EPSILON; // Default to epsilon instead of 0 to avoid fireflies
 
         if (this.useCosineWeightedSampling)
         {
             // TODO: Student implementation starts here.
             // rayIn is the sampled direction, so we compute cosTheta with it
-            float cosTheta = max(dot(rayIn, normal), 0.0);
+            float cosTheta = max(dot(rayIn, normal), EPSILON);
             pdf = cosTheta * INV_PI;
 
             // TODO: Student implementation ends here.

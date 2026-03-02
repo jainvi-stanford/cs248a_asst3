@@ -43,7 +43,7 @@ public struct RectangularLight
         float distanceSquared = dot(toLight, toLight);
         float cosTheta = abs(dot(normalize(toLight), this.normal));
         if (cosTheta <= EPSILON) {
-            return 0.0; // Light is facing away from the point, so PDF is zero
+            return 1e6; // Return very large PDF to effectively zero out contribution instead of returning 0
         }
         pdf = distanceSquared / (cosTheta * this.area);
         // TODO: Student implementation ends here.

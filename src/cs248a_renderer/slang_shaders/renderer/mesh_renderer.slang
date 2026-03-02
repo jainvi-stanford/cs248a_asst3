@@ -122,10 +122,10 @@ public Optional<RayMeshSampleResult> meshSample(float2 uv, RendererUniform unifo
                     // TODO Step 4b: Student implementation starts here.
                     // Update throughput: throughput *= (fr * cosTheta) / pdf
                     float cosTheta = max(dot(normalize(sample_brdf_result.sampledDirection), normalize(normal)), 0.0);
-                    float pdf = sample_brdf_result.sampledPdf;
-                    if (pdf > 1e-6) {
-                        throughput *= (sample_brdf_result.fr * cosTheta) / pdf;
-                    }
+                    float pdf = max(sample_brdf_result.sampledPdf, 0.01); // Clamp PDF to avoid fireflies
+                    throughput *= (sample_brdf_result.fr * cosTheta) / pdf;
+                    // Clamp throughput to prevent fireflies from extreme values
+                    throughput = min(throughput, float3(5.0));
                     // TODO Step 4b: Student implementation ends here.
 
                     if (max(throughput.x, max(throughput.y, throughput.z)) < 1e-2)
@@ -165,5 +165,7 @@ public Optional<RayMeshSampleResult> meshSample(float2 uv, RendererUniform unifo
         }
     }
 
+    // Clamp radiance to prevent fireflies
+    radiance = min(radiance, float3(50.0));
     return Optional<RayMeshSampleResult>(RayMeshSampleResult(t, normalAtFirstHit, float4(radiance, 1.0)));
 }
